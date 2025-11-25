@@ -360,6 +360,38 @@ Notice that this is exactly a Gaussian kernel with distance scale $L \equiv (1/C
 
 Thus, we get a similar but slightly generalised version of the previous Gaussian kernel function but where each component of the input vector $x_j$ is part of a Gaussian kernel with length scale $L=(n_0/C_W)^{1/2}$. Remember again that this is all in the limit of infinite width because it is only in this limit that the sum over randomised hidden layer neurons becomes an exact expectation value/mean. 
 
+To be instructive here and to get some practise, let's rederive this kernel using the distribution of preactivations instead of the distribution of weights. We should end up with the same solution if the methods are equivalent. 
+
+\begin{align}
+    K(x_\alpha,x_\beta) &= \expval{\sigma_{i;\alpha}\sigma_{i;\beta}}\nonumber\\
+    &= \int \mathcal{D}z \, P(z)\, \sigma^*(z_\alpha)\sigma(z_\beta)\nonumber\\
+    &= \int \mathcal{D}z \frac{1}{\mathcal{N}} \exp[-\frac{1}{2}z_{\alpha_1} G_{(1)}^{\alpha_1 \alpha_2} z_{\alpha_2}]\,e^{i (z_\beta-z_\alpha)}\nonumber\\
+    &= \int dz_{\alpha} dz_{\beta} \frac{1}{(2\pi) \,|\Sigma^{(1)}_{\alpha\beta}|^{1/2}}\,\exp\left[-\frac{1}{2} \mqty(z_\alpha & z_\beta) \cdot \Sigma_{(1)}^{\alpha\beta} \cdot \mqty(z_\alpha \\ z_\beta)\right] \exp\left[i \mqty(-1 & 1 )\cdot \mqty(z_\alpha \\z_\beta)\right]\nonumber\\
+    &= \int \frac{d^2 z}{2\pi |\Sigma^{(1)}|^{1/2}} \, \exp\left[-\frac{1}{2} z_i \cdot \Sigma_{(1)}^{ij} z_j\right] \exp\left[i k^i z_i\right]\nonumber
+\end{align}
+where we've defined the two-dimensional subset of the total kernel matrix $G_{(1)}$ which we denote as $\Sigma_{(1)} = \mqty(G^{\alpha \alpha} & G^{\alpha \beta}\\ G^{\beta \alpha} & G^{\beta\beta})$ and we have the added term $k^i z_i$ with $k^i = (-1, 1)$. The other terms in the kernel matrix $G_{(1)}$ all integrate to unity since they don't involve the $\alpha,\beta$ terms. We can now evaluate this without too much effort by completing the square. 
+
+\begin{align}
+    K(x_\alpha, x_\beta) &= \int \frac{d^2 z}{2\pi |\Sigma^{(1)}|^{1/2}} \, \exp\left[-\frac{1}{2} z_i \cdot \Sigma_{(1)}^{ij} z_j\right] \exp\left[i k^i z_i\right]\nonumber\\
+    &= \int \frac{d^2 z}{2\pi |\Sigma^{(1)}|^{1/2}} \, \exp\left[-\frac{1}{2}\left(z_i - i\Sigma_{il} k^l\right)\Sigma^{ij}\left(z_j - i\Sigma_{jm} k^m\right)\right] \exp\left[-\frac{1}{2}k^i \Sigma_{ij} k^j\right]\nonumber\\
+    K(x_\alpha,x_\beta)&= \exp\left[-\frac{1}{2}k^i \Sigma_{ij}^{(1)} k^j\right] = \exp\left[-\frac{1}{2}\left(G_{\alpha\alpha}^{(1)} + G_{\beta\beta}^{(1)} - 2 G_{\alpha\beta}^{(1)}\right)\right]\\
+    &= \exp\left[-\frac{C_W^{(1)}}{2\, n_0}\left( x_{i;\alpha}x^i_{\alpha} + x_{i;\beta}x^i_{\beta} - 2 x_{i;\alpha}x^i_{\beta} \right)\right]\nonumber\\
+    \therefore K(x_\alpha,x_\beta) &= \exp\left[-\frac{1}{2}\frac{C_W^{(1)}}{n_0}\left( x_{i;\beta} - x_{i;\alpha}\right)\left( x^i_{\beta} - x^i_{\alpha}\right)\right]
+\end{align}
+
+This is exactly the same answer we derived with the weight probability distribution approach. This approach, however, will be easier to generalise to other activation functions as we will demonstrate now. 
+
+
+\subsubsection{ReLU Activation NNGP Kernel}
+
+We will now use the same approach but compute the NNGP kernel function for the ReLU activation function which we define as follows:
+\begin{align}
+    \sigma(z) &= \max(0,z)
+\end{align}
+
+It's a very simple activation function that is scale-invariant (i.e. if you scale the input space $z$ by some constant factor, the function looks exactly the same. In other words, ``zooming'' into and out of the function on a graph does not change it at all). It's very popular in modern deep learning so it's worth calculating the NNGP kernel for it. 
+
+
 
 
 \subsection{The Benefit of Over-Parametrisation}
