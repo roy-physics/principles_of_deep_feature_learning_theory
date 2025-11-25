@@ -382,7 +382,7 @@ where we've defined the two-dimensional subset of the total kernel matrix $G_{(1
 This is exactly the same answer we derived with the weight probability distribution approach. This approach, however, will be easier to generalise to other activation functions as we will demonstrate now. 
 
 
-\subsubsection{ReLU Activation NNGP Kernel}
+\subsubsection{NNGP Kernel: ReLU Activation}
 
 We will now use the same approach but compute the NNGP kernel function for the ReLU activation function which we define as follows:
 \begin{align}
@@ -391,7 +391,24 @@ We will now use the same approach but compute the NNGP kernel function for the R
 
 It's a very simple activation function that is scale-invariant (i.e. if you scale the input space $z$ by some constant factor, the function looks exactly the same. In other words, ``zooming'' into and out of the function on a graph does not change it at all). It's very popular in modern deep learning so it's worth calculating the NNGP kernel for it. 
 
+\begin{align}
+    K(x_\alpha,x_\beta) &= \int \mathcal{D}z \, P(z)\, \sigma^*(z_\alpha)\sigma(z_\beta)\nonumber\\
+    &= \int \mathcal{D}z \frac{1}{\mathcal{N}} \exp[-\frac{1}{2}z_{\alpha_1} G_{(1)}^{\alpha_1 \alpha_2} z_{\alpha_2}]\,\sigma(z_\alpha)\, \sigma(z_\beta)\nonumber\\
+    &= \int \frac{d^2 z}{2\pi |\Sigma^{(1)}|^{1/2}} \, \exp\left[-\frac{1}{2} z_i \cdot \Sigma_{(1)}^{ij} z_j\right]\,\sigma(z_\alpha)\, \sigma(z_\beta) \nonumber
+\end{align}
+where, again, we've integrated over the components of the correlator tensor $G_{(1)}$ which don't correspond to the data sample elements $\alpha,\beta$. Thus, we end up with a two-dimensional tensor. We can think of this integral over two-dimensional space as being non-zero in only one quadrant where $z_\alpha > 0$ and $z_\beta > 0$. All other quadrants contribute nothing to the integral.
 
+\begin{align}
+    K(x_\alpha,x_\beta) &=\frac{1}{2\pi |\Sigma^{(1)}|^{1/2}} \int_0^\infty dz_\alpha \int_0^\infty dz_\beta \, \exp\left[-\frac{1}{2} z_i \,\Sigma_{(1)}^{ij}\, z_j\right]\,z_\alpha\, z_\beta
+\end{align}
+
+Now, one can do the algebra to compute this integral. It's fairly involved and annoying so I will just quote the final result:\textbf{MAYBE OFFER MORE DETAILS HERE.}
+\begin{align}
+    K(x_\alpha,x_\beta) &= \frac{\sqrt{G_{\alpha\alpha}^{(1)}\,G_{\beta\beta}^{(1)}} }{2\pi} \,\left[\sqrt{1 - c_{\alpha\beta}^2} + (\pi - \arccos c_{\alpha\beta})\,c_{\alpha\beta}\right]
+\end{align}
+where $c_{\alpha\beta} = \frac{G^{(1)}_{\alpha\beta}}{ \sqrt{G_{\alpha\alpha}^{(1)}\,G_{\beta\beta}^{(1)}} }$. 
+
+\textbf{SIMPLIFY TO GET RIDE OF THE $G$ KERNELS.}
 
 
 \subsection{The Benefit of Over-Parametrisation}
