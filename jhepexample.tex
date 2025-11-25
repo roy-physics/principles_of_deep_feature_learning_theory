@@ -1,0 +1,452 @@
+
+\documentclass[a4paper,12pt]{article}
+\pdfoutput=1 % if your are submitting a pdflatex (i.e. if you have
+             % images in pdf, png or jpg format)
+
+\usepackage{jheppub} % for details on the use of the package, please
+                     % see the JHEP-author-manual
+
+\makeatletter
+  % widen text block to 80% of the paper width
+  \setlength\textwidth{0.85\paperwidth}%
+  % shift margins in by 10% of the paper width
+  \setlength\oddsidemargin{0.075\paperwidth}%
+  \setlength\evensidemargin{0.075\paperwidth}%
+
+\usepackage[T1]{fontenc} % if needed
+
+\usepackage{graphicx}% Include figure files
+\usepackage{dcolumn}% Align table columns on decimal point
+%\usepackage{bm}% bold math
+\usepackage{hyperref}% add hypertext capabilities
+%\usepackage[mathlines]{lineno}% Enable numbering of text and display math
+%\linenumbers\relax % Commence numbering lines
+%\usepackage{style}
+\usepackage{xcolor}
+\usepackage{bbm}
+\usepackage{subfiles}
+\usepackage{amsfonts}
+\usepackage{tabularx}
+\usepackage{physics}
+\usepackage{comment}
+\usepackage{listings}
+
+%\usepackage[showframe,%Uncomment any one of the following lines to test 
+%%scale=0.7, marginratio={1:1, 2:3}, ignoreall,% default settings
+%%text={7in,10in},centering,
+%%margin=1.5in,
+%%total={6.5in,8.75in}, top=1.2in, left=0.9in, includefoot,
+%%height=10in,a5paper,hmargin={3cm,0.8in},
+%]{geometry}
+
+
+% math commands
+\newcommand{\Ls}[0]{\mathcal{L}}
+\newcommand{\Xs}[0]{\mathcal{X}}
+\newcommand{\R}[0]{\mathbb{R}}
+\newcommand{\C}[0]{\mathbb{C}}
+\newcommand{\lagrangian}{\mathcal{L}}
+\newcommand{\phidot}{\Dot{\phi}}
+\newcommand{\phiddot}{\Ddot{\phi}}
+\newcommand{\xvec}{{\bf x}}
+\newcommand{\vvec}{{\bf v}}
+\newcommand{\avec}{{\bf a}}
+\newcommand{\pvec}{{\bf p}}
+\newcommand{\fstar}{f^*}
+\newcommand{\ftwiddlestar}{\Tilde{f}^*}
+\newcommand{\xvecstar}{\xvec^*}
+\newcommand{\nvec}{{\bf n}}
+\newcommand{\qvec}{{\bf q}}
+\newcommand{\Evec}{{\bf E}}
+
+\newcommand{\loss}{\mathcal{L}}
+\newcommand{\trainset}{\mathcal{A}}
+\newcommand{\agop}{\mathcal{T}}
+\newcommand{\dataset}{\mathcal{D}}
+\newcommand{\normal}{\mathcal{N}}
+
+
+% Section counting commands
+%–– make sections subordinate to parts ––
+%\usepackage{chngcntr}
+%\counterwithin{section}{part}
+%–– have parts numbered in arabic not roman ––
+%\renewcommand\thepart{\arabic{part}}
+%–– optionally show parts in the TOC ––
+%\setcounter{tocdepth}{1}   % 1 = include parts and sections
+
+
+\def\sandip#1{\textbf{ \textcolor{orange}{[SR: {#1}]}}}
+
+
+\title{\boldmath Principles of Deep Feature Learning Theory: My Personal Notes}
+
+
+%% %simple case: 2 authors, same institution
+%% \author{A. Uthor}
+%% \author{and A. Nother Author}
+%% \affiliation{Institution,\\Address, Country}
+
+% more complex case: 4 authors, 3 institutions, 2 footnotes
+\author[a,1]{Sandip Roy,\note{Schmidt AI in Science Fellow}}
+%\author[c]{S. Econd,}
+%\author[a,2]{T. Hird\note{Also at Some University.}}
+%\author[a,2]{and Fourth}
+
+% The "\note" macro will give a warning: "Ignoring empty anchor..."
+% you can safely ignore it.
+
+\affiliation[a]{University of California San Diego,\\Gilman St, La Jolla, CA 92093}
+%\affiliation[b]{Another University,\\different-address, Country}
+%\affiliation[c]{A School for Advanced Studies,\\some-location, Country}
+
+% e-mail addresses: one for each author, in the same order as the authors
+\emailAdd{sandiproy@ucsd.edu}
+%\emailAdd{second@asas.edu}
+%\emailAdd{third@one.univ}
+%\emailAdd{fourth@one.univ}
+
+
+
+
+\abstract{
+In this set of notes, I want to record my knowledge of deep learning theory, specifically focused on the dynamics of feature learning. I will draw from various different lecture notes, textbooks, and papers I find interesting. I intend for this to be a running set of notes and paper summaries.
+}
+
+
+
+\begin{document} 
+\maketitle
+\flushbottom
+
+
+\section{Introduction}
+\label{sec:intro}
+
+The point of these Overleaf document is just to document my thoughts on deep learning theory specifically focused on feature learning and the dynamics of learning in modern deep learning methods. 
+
+Overall, it seems to be a fundamental mystery to me how deep learning methods work. What features of the data do they learn? How do they learn these features? How does the learning process depend on the network architecture and hyperparameters? 
+
+These seem like pretty fundamental and important questions. I want to understand current literature and to see if techniques from physics can help in this effort to understand deep feature learning. This may seem ambitious but I'm sure it'll be fun!
+
+
+
+
+\newpage
+\part{Lecture Notes on Kernel Learning and Neural Tangent Kernels}
+
+This part of the notes will be based on Adityanarayanan Radhakrishnan's \href{https://aditradha.com/lecture-notes/}{lecture notes} at MIT. We'll begin with his notes on kernel regression before progressing eventually to his notes on the Neural Tangent Kernel. I'm going to use my own notation and my own derivations for everything.
+
+\section{Kernel Regression}
+
+Kernel regression is basically just linear regression but instead of performing linear regression on the explicit input data vectors $x_\alpha$ (where $\alpha$ is the data sample index), we perform linear regression on some \textbf{feature vectors} which we'll notate as $\psi_\mu(x_\alpha) \equiv \psi_{\mu;\alpha}$. This feature space may be different in dimension to the input vector $x_\alpha$. Let's imagine we have a training dataset $\trainset = \{(x_i,y)\}_\alpha$ where $\alpha = 1,\ldots,N_\dataset$. The loss function for our kernel regression is the following MSE loss. 
+\begin{align}
+    \loss(w) &= \frac{1}{2}(y_\alpha - w_{\mu} \psi^\mu_{\alpha})(y^\alpha - w_\nu \psi^{\nu;\alpha})
+\end{align}
+where we're doing an Einstein summation but only when we contract upper and lower indices together (not when two indices are both upper or both lower). The weights $w_\mu$ are the coefficients of the data-space sample vectors and we've assumed the functional form of our approximate function as $f(x;w) = w_\mu \psi^\mu(x)$. let's now minimise the loss function to compute our ideal weight vector $w^*$:
+
+\begin{align*}
+    \pdv{\loss}{w_\nu} &= \psi^\nu_\alpha \,(y^\alpha - w_\mu \psi^{\mu;\alpha})\\
+    0 &= \psi^\nu_\alpha \,(y^\alpha - w_\mu^* \psi^{\mu;\alpha})\\
+    w^*_\mu \psi^\nu_\alpha \psi^{\mu;\alpha} &= \psi_\alpha^\nu \,y^\alpha\\
+    w^*_\mu &= y_\alpha\,\left[(\psi_\beta \psi^\beta)^{-1}\right]^\nu_{\mu}\psi^\alpha_\nu
+\end{align*}
+\newcommand{\wstar}{w^*}
+Nice! The fact that this is linear regression means that this is a convex optimisation problem and we can analytically calculate our minimum-loss solution. Specifically, this is our ideal approximation function:
+\begin{align}
+    f(x;\wstar) &= \wstar_\mu \psi^\mu(x) = y_\alpha\,\left[(\psi_\beta \psi^\beta)^{-1}\right]^\nu_{\mu}\psi^\alpha_\nu \psi^\mu(x)
+\end{align}
+
+This is our minimum loss solution but in its currently written form, it's not very instructive or intuitive. Let's squeeze some intuition out of it. One way of writing our functional form is as an inner product so $f(x) = \braket{w}{\psi(x)} \equiv w_\mu \psi^\mu(x)$. Thus, our function can be seen as an inner product in this feature space. 
+
+This brings us to representer theorem. We can think of our minimum loss weight as lying in the space of feature vectors but that also allows us to think of our weight vectors as summing over the data-sample space. Concretely, given this intuition, we can recast our weights as follows:
+\begin{align}
+    \wstar_\mu &= c_\alpha \psi^\alpha_\mu\\
+    c_\alpha &= y_\beta \left[(\psi_\nu \psi^\nu)^{-1}\right]^\beta_\alpha
+\end{align}
+where we've derived the form of the coefficients $c_\alpha$ using our formula for $\wstar_\mu$ above.\footnote{{We skipped a bunch of steps. Let's denote $\psi_\alpha^\mu = \Psi$ s.t. $\Psi\cdot \Psi^T = \psi_\alpha^\mu \psi^\alpha_\nu$. Thus, we write our minimum loss parameters succinctly as $\wstar = y_\alpha\,[(\Psi\cdot \Psi^T)^{-1}]^\nu_\mu\cdot\Psi_\nu^\alpha$. Let's now ``massage'' this into the right form. $y\,(\Psi \Psi^T)^{-1} \Psi = y\,(\Psi \Psi^T)^{-1}\Psi \cdot (\Psi^T\Psi)\cdot(\Psi^T\Psi)^{-1} = y\,(\Psi \Psi^T)^{-1}\cdot(\Psi \Psi^T)\cdot\Psi\cdot(\Psi^T\Psi)^{-1} = y_\beta \psi_\mu^\alpha  [(\Psi^T \Psi)^{-1}]^\beta_\alpha$. Therefore, we get the result that $c_\alpha = y_\beta [(\Psi^T \Psi)^{-1}]^\beta_\alpha$}.} 
+
+This form is referred to as the representer theorem. It tells us that the minimum loss coefficient vector $\wstar_\mu$ lies in the span of the samples $\psi_{\mu}(x_\alpha)$. What's nice about this way of thinking about the coefficients is that we can define directions in the Hilbert space of functions $\psi_\mu(x_\alpha) \subset \mathcal{H}$ which are aligned with the span of data sample representations as well as directions that are orthogonal to the data sample span (remember the inner products in this Hilbert space are just the contraction of the representation vectors). We can then rethink our functional form as follows:
+\begin{align}
+    f(x;\wstar) &= \wstar_\mu \psi^\mu(x) = c_\alpha \psi_\mu^\alpha \psi^\mu(x) = c_\alpha \braket{\psi(x^\alpha)}{\psi(x)} \equiv \braket{\wstar}{\psi(x)}
+\end{align}
+
+Thus, our function can be thought of as an inner product in representation space. Equally, we can think of our function $f(x)$ as taking inner products with representation vectors in data sample space i.e. if there's a data sample $x_\alpha$ that gives a very large inner product in feature space with our function $\psi(x)$, then that is weighted the highest. This also means that any input $x$ that gives a feature vector $\psi(x)$ which is orthogonal to the span of the data sample features will be mapped to the null space i.e. to zero. This, at least, gives us more intuition for what's going with this regression procedure. 
+
+
+\subsubsection{The Kernel Trick}
+
+Notice that our new way of thinking about the function as $f(x) = c_\alpha \braket{\psi(x^\alpha)}{\psi(x)}$, i.e. an inner product with all data sample feature vectors, we can recast our loss minimisation process as minimising $\loss$ w.r.t. the data sample coefficients $c_\alpha$ instead of minimising w.r.t. $w_\mu$. Either way, if we consider the data sample coefficients as our free parameters, then the inner products $\braket{\psi(x_\alpha)}{\psi(x)}$ are ``fixed'' by the data samples and the feature function $\psi$. 
+
+Therein lies the problem, however. How do you pick these feature functions $\psi$? In some scenarios, the problems are very contained and therefore the feature functions are clear. For example, in cosmology, one may have data $x_\alpha$ which represents dark matter density maps $\delta_\alpha$ which then needs to be mapped to a power spectrum $P(k)$ for different $k$-bins. In that case, one could define the feature function $\psi(\delta_\alpha) \equiv P(k)$. However, in many cases, it's totally unclear what the right feature functions are. Part of the magic of modern deep learning is that, with enough data, the neural networks seem to ``learn'' extremely complex, non-linear feature functions which work very well in data-rich and non-linear scenarios.
+
+\newcommand{\hilbertspace}{\mathcal{H}}
+The kernel trick arises out of this difficulty in choosing feature functions. Since all we care about is the inner product $\braket{\psi(x_\alpha)}{\psi(x)}$, we don't care about the exact feature function but the inner product in this feature space. So, instead of worrying about our choice of feature function $\psi(x)$, let's just worry about the inner product in feature space. What is this inner product? It is a \textbf{kernel}. In physics, we often call this a \textbf{propagator} or \textbf{two-point correlator}. Let's first understand the properties of this kernel which arise naturally from the properties of inner products in a Hilbert space $\hilbertspace$ which we learn in our first quantum mechanics class.
+\begin{align}
+    \braket{\psi_\alpha}{\psi} &= \overline{\braket{\psi}{\psi_\alpha}}\\
+    \braket{\psi} &\geq 0\\
+\end{align}
+where I'm using the notation $\overline{z}$ to signify complex conjugation. In the case of real-valued feature vectors (which is what we consider), this just becomes the statement that ordering of the inner product doesn't matter; it's symmetric. 
+
+Thus, we can define a kernel function:
+\begin{align}
+    K(x',x) &= \braket{\psi(x')}{\psi(x)}
+\end{align}
+
+Naturally, this kernel function has the exact same properties as our inner product (because it basically is an inner product):
+\begin{align}
+    K(x',x) &= K(x,x')\\
+    K(x,x) &\geq 0
+\end{align}
+
+Thus, it is a positive, semi-definite, symmetric tensor. \textbf{The kernel trick is therefore just the idea that instead of defining the feature functions $\psi(x)$ which is hard, just define the kernel or inner product.} Here are some popular choices:
+\begin{enumerate}
+    \item \textbf{Linear Kernel}: $K(x',x) = x'_i \,x^i$
+    \item \textbf{Gaussian Kernel}: $K(x',x) = \exp[- (x'-x)^2/2\sigma^2]$ (one has to specify the smoothing $\sigma$)
+    \item \textbf{Laplace Kernel}: $K(x',x) = \exp[- ||(x'-x)||/\sigma]$
+\end{enumerate}
+
+Now, in reality, each of these choices of kernels corresponds to a particular choice of feature function $\psi$. Thus, implicitly, one is actually picking a feature function space when picking a specific kernel. However, it is often easier to specify/design a kernel function instead of a feature function space. 
+
+Now, with all of this understanding of kernel functions, we can re-express our minimum loss function $f(x;\wstar) = \braket{\wstar}{\psi(x)}$ in terms of kernel functions. Specifically, let's define a kernel matrix $K^\beta_\alpha = \psi_\nu^\beta \psi^\nu_\alpha \equiv \braket{\psi^\beta}{\psi_\alpha}$. Thus, we get the following result:
+\begin{align}
+    c_\alpha &= y_\beta\, [K^{-1}]^\beta_\alpha\\
+    \wstar_\mu &= y_\beta\, [K^{-1}]^\beta_\alpha \psi^\alpha_\mu\\
+    f(x_\delta;\wstar) &= y_\beta\, [K^{-1}]^\beta_\alpha \psi^\alpha_\mu \psi^\mu(x) \equiv y_\beta\, [K^{-1}]^\beta_\alpha \,K^\alpha_\delta
+\end{align}
+where $x_\delta$ is some generic data value from some generic dataset $\dataset$ which may or may not be the same as the training set $\trainset$. 
+
+
+
+\subsubsection{Linking Kernel Regression to Wide Neural Networks}
+
+There is a deep connection between kernel regression and training infinitely wide neural networks. The connections seem to have been known for a while but recent advances in neural tangent kernel theory have revived interest in this area. Let's sketch out the relationship between infinitely wide neural networks and kernel regression methods. 
+
+First, consider a single-hidden layer fully connected network (FCN) where we also define $n_0$ as the dimension of the input vector $x^i$ and $n_1$ as the hidden layer dimension. 
+\begin{align}
+    f(x) &= \frac{1}{\sqrt{n_1}}W^{(2)}_{i} \sigma\left(\frac{1}{\sqrt{n_0}}\,{W^{(1)}}^i_{j}\, x^j\right)
+\end{align}
+
+Now, we can consider the hidden layer vector $\sigma\left({W^{(1)}}^i_{j}\,x^j\right)$ as the feature space of the neural network. They map the input vector $x^j$ to the hidden layer's representation. Thus, we can make the following equivalence:
+\begin{align}
+    f(x) &= \frac{1}{\sqrt{n_1}}\,W^{(2)}_{i} \sigma\left( \frac{1}{\sqrt{n_0}}\,{W^{(1)}}^i_{j}\, x^j\right) \equiv W^{(2)}_i \psi^i(x)\\
+    \therefore \psi^i(x) &\equiv  \frac{1}{\sqrt{n_1}}\,\sigma\left( \frac{1}{\sqrt{n_0}}\, {W^{(1)}}^i_{j}\, x^j\right) 
+\end{align}
+
+Evidently, the second-layer weight vector just gives us a linear combination of these hidden-layer feature vectors. This is the intuitive connection between kernel learning methods and deep neural networks. We can thus define the following kernel function:
+\begin{align}
+    K(x',x) &=  \frac{1}{\sqrt{n_1}}\,\sigma\left( \frac{1}{\sqrt{n_0}}\,{W^{(1)}}^i_{j}\, x'^j\right) \, \frac{1}{\sqrt{n_1}}\,\sigma\left( \frac{1}{\sqrt{n_0}}\,{W^{(1)}}_i^{k}\, x_k\right) \equiv \psi^i(x')\,\psi_i(x)
+\end{align}
+
+The key to all this, however, is that we're talking about \textbf{infinitely wide FCNs}. In this limit the representations in the hidden layer basically become fixed at initialisation i.e. they don't evolve with training. It's a pretty remarkable result that we will derive in future sections. Thus, we initialise the weights with the following distributions:
+\begin{align}
+    W_{ij}^{(1)} \sim \normal\left(0,{C_W^{(1)}}\right)\\
+    W_{i}^{(2)} \sim \normal\left(0,{C_W^{(2)}}\right)
+\end{align}
+
+The features in the hidden layer don't evolve, they basically get set by their initialisation distribution. It's the coefficients in the second layer that get tuned with training via the following loss function where we sum over a training dataset $\trainset = \{(x_\alpha,y_\alpha)\}_{\alpha = 1,\ldots,N_\trainset}$:
+\begin{align}
+    \loss[f] &= \frac{1}{2}\left(y_\alpha -  \frac{1}{\sqrt{n_1}}\,W^{(2)}_i \sigma^i_\alpha\right)\left(y^\alpha -  \frac{1}{\sqrt{n_1}}\,W^{(2)}_j \sigma^{j;\alpha}\right)\\
+    &\equiv \frac{1}{2}\left(y_\alpha -  \frac{1}{\sqrt{n_1}}\,W^{(2)}_i \psi^i_\alpha\right)\left(y^\alpha -  \frac{1}{\sqrt{n_1}}\,W^{(2)}_j \psi^{j;\alpha}\right)
+\end{align}
+where we've defined $\sigma^i_\alpha = \sigma\left( \frac{1}{\sqrt{n_0}}\, {W^{(1)}}^i_{j}\, x^j_\alpha\right)$. Now, assuming that the feature maps are fixed, we basically just update the coefficient vectors $W^{(2)}_i$. This is literally just kernel regression and is a convex optimisation problem akin to the problem we have already solved before. Of course, this assumes that we don't update our feature vector functions which only holds in the infinite width limit. 
+
+
+\section{Neural Network Gaussian Processes and Over-Parametrisation}
+
+\subsection{Random Feature Models and Neural Network Gaussian Processes}
+
+Let's consider the same dataset of samples in a training set $\trainset = \{(x_\alpha^i, y_\alpha)\}_{\alpha = 1,\ldots,N_\trainset}$ where $x^i \in \mathbb{R}^{n_0}$. We also define a feature function which lives in a Hilbert space with an inner product defined by the L2 norm (i.e. the contraction of the feature vector indices) so $\psi: \mathbb{R}^{n_0}\rightarrow \mathbb{R}^{n_1}$. We can also define a kernel function given by an inner product in feature space s.t. $K(x',x) = \braket{\psi(x')}{\psi(x)} = \psi_\mu(x')\,\psi^\mu(x)$.
+
+Now, in the previous section we considered kernel functions without considering the feature functions. For neural network gaussian processes (NNGPs), we will do the inverse and specify the feature functions explicitly and get the kernel functions for free. Specifically, let us first specify our single-hidden-layer neural network function:
+\begin{align}
+    f(x) &=  \frac{1}{\sqrt{n_1}}\,W^{(2)}_i \sigma\left( \frac{1}{\sqrt{n_0}}\,{W^{(1)}}^i_j\, x^j\right) \equiv W^{(2)}_i\, \psi^i(x)\\
+    \therefore \psi^i(x) &\equiv   \frac{1}{\sqrt{n_1}}\,\sigma\left( \frac{1}{\sqrt{n_0}}\,{W^{(1)}}^i_j\, x^j\right)
+\end{align}
+
+As we stated at the end of the previous section on kernel learning, we can consider the activated hidden layer outputs as the feature vector space which then gets contracted with a weight vector $W^{(2)}$ to produce our output. The feature space is the same dimension as the hidden layer width i.e. $\psi^i \in \mathbb{R}^{n_1}$.
+
+Now, we can initialise the weights of the hidden and the final layer as follows:
+\begin{align}
+    W_{ij}^{(1)} \sim \normal\left(0,{C_W^{(1)}}\right)\\
+    W_{i}^{(2)} \sim \normal\left(0,{C_W^{(2)}}\right)
+\end{align}
+
+Before we define NNGPs, let us make the analogy with kernel regression. Let us assume that we don't update the feature function kernels. In other words, the feature vector functions are set up randomly during initialisation and do not update during training. All that is updated are the coefficient weights $W^{(2)}_i$. Thus, we basically have a kernel regression problem but with randomly initialised feature vectors. We can perform gradient descent with the following loss function where we denote $\sigma^i_\alpha = \sigma\left( \frac{1}{\sqrt{n_0}}\, {W^{(1)}}^i_{j}\, x^j_\alpha\right)$:
+\begin{align}
+    \loss[W^{(2)}] &= \frac{1}{2}\left(y_\alpha -  \frac{1}{\sqrt{n_1}}\,W^{(2)}_i \sigma^i_\alpha\right)\left(y^\alpha -  \frac{1}{\sqrt{n_1}}\,W^{(2)}_j \sigma^{j;\alpha}\right)\\
+    &\equiv \frac{1}{2}\left(y_\alpha -  W^{(2)}_i \psi^i_\alpha\right)\left(y^\alpha -  W^{(2)}_j \psi^{j;\alpha}\right)
+\end{align}
+
+Essentially, the feature vectors are fixed but the weights are minimised with this MSE loss function. Since this is exactly the same problem as in the previous section on kernel regression, we can solve for the second layer weight coefficients exactly. We just need to use the right kernel matrix:
+\begin{align}
+    K(x_\alpha,x_\beta) = \braket{\psi(x_\alpha)}{\psi(x_\beta)} = \frac{1}{n_1}\,\sigma_{i;\alpha}\,\sigma^{i}_\beta
+\end{align}
+
+In the limit that the hidden layer becomes infinitely wide s.t. $n_i\rightarrow \infty$,  all neural networks have this property that the feature vector kernels are ``frozen'' at initialisation and do not update during training. Thus, only the coefficients of the random feature functions are updated. In this limit, we have a neural network gaussian process (NNGP). 
+
+\textbf{This is what we mean by NNGP: Randomly initialised hidden-layer feature vectors in the infinitely wide limit whose coefficients alone are updated during training; the feature vector functions are frozen.}
+
+\subsubsection{Infinite Wide Kernel: Law of Large Numbers Derivation}
+
+What does this NNGP kernel look like?  Let's write down the limit of the kernel in the limit of infinite width.
+\begin{align}
+    \lim_{n_1\rightarrow \infty} K(x_\alpha,x_\beta) &= \lim_{n_1\rightarrow \infty} \frac{1}{n_1}\sigma_{i;\alpha}\sigma^i_\beta\\
+    \therefore \lim_{n_1\rightarrow \infty} K(x_\alpha,x_\beta)&= \expval{\sigma_\alpha\,\sigma_\beta}
+\end{align}
+where we've used the following notation (summing over the $j$ indices):
+\begin{align}
+    \expval{\sigma_\alpha \sigma_\beta} &= \int \mathcal{D}W^{(1)}_{ij} P({W^{(1)}}_{i}^j)\,\sigma\left(\frac{1}{\sqrt{n_0}}\,W^{(1)}_{ij} x^j_\alpha\right)\,\sigma\left(\frac{1}{\sqrt{n_0}}\,W^{(1)}_{ik} x^k_\beta\right)\\
+    P({W^{(1)}}_{i}^j) &= \frac{1}{\sqrt{2 \pi C_W^{(1)}}}\,\exp\left[-\frac{1}{2}\frac{ \left(W^{(1)}_{ij}\right)^2}{C_W^{(1)}}\right]\\
+    \mathcal{D}W_{ij}^{(1)}\,P(W_{ij}^{(1)}) &= \Pi_{j=1}^{n_0} dW_{ij}^{(1)} \, \frac{1}{\sqrt{2 \pi C_W^{(1)}}}\,\exp\left[-\frac{1}{2}\frac{ \left(W^{(1)}_{ij}\right)^2}{C_W^{(1)}}\right]
+\end{align}
+
+Notice that we're not summing over the $n_1$-dimensional $i$ neural index. We're just computing the expectation value of the $i$th neuron in the hidden layer. Notice that in our expression for the infinite width kernel, while we are summing over the $n_1$ neural indices $i$, each of these neurons are randomly initialised. They are not trained, they are just randomly sampled from the same probability density function (PDF) $P(W^{(1)})$. Thus, we are basically just randomly sampling $\sigma_{i;\alpha}$ and $\sigma_{i;\beta}$ from the same PDF and then computing an infinite sum. We then divide that infinite sum by the number of neurons $n_1$. This is literally just the mean of $\sigma_{i;\alpha} \sigma_{i;\beta}$ (not summing over $i$) i.e. the sum of $n_1$ random samples divided by the number of samples $n_1$ in the limit of large $n_1$. It becomes exact in the infinite width limit $n_1\rightarrow\infty$. You can call this the law of large numbers, the infinite convergence of Monte-Carlo/frequentist sampling, whatever floats your boat. 
+
+
+Note that there is a nice connection here with Gaussian random fields and free field theories in quantum/statistical field theory. Put simply, there is a way to recast our expectation value $\expval{\sigma_\alpha\sigma_\beta}$ in terms of the distribution of preactivations $z^{(1)}_{i;\alpha} = \frac{1}{\sqrt{n_0}}W^{(1)}_{ij} x^j_\alpha$. This distribution, it turns out, is exactly what one would expect from a free field theory, or a gaussian random field. There are no connected correlators (i.e. cumulants) for the preactivations beyond the second-order correlator. 
+
+In that vein, we can recast our expectation value in terms of the distribution of preactivations:
+\begin{align}
+    \expval{\sigma_\alpha \sigma_\beta} &= \int \mathcal{D}z^{(1)}_{i} P(z^{(1)}_{i})\,\sigma\left(z^{(1)}_{i;\alpha}\right)\,\sigma\left(z^{(1)}_{i;\beta}\right)
+\end{align}
+where, again, we're not summing over the neural indices $i$, we're just picking a specific neural index (although the math is exactly the same for all hidden layer neurons). The probability distribution is the following:
+
+\begin{align}
+    P(z^{(1)}_i) \equiv P(z^{(1)}) &= \frac{1}{(2\pi)^{N_\trainset/2}\, |G_{\alpha\beta}|^{1/2}} \exp\left[-\frac{1}{2}z_\alpha\, {G^{(1)}}^{\alpha\beta}z_\beta\right]
+\end{align}
+where we have to define the propagator/connected two-point correlator as follows:
+\begin{align}
+    {G^{(1)}}_{\alpha\beta} &= C_W^{(1)}\,\frac{1}{n_0}x_\alpha^i\,x_{i;\beta}\\
+    {G^{(1)}}_{\alpha\rho}\,{G^{(1)}}^{\rho\beta} &= \delta^\beta_\alpha
+\end{align}
+
+\textbf{WOULD BE NICE TO LAY THIS OUT AND DERIVE IT EXPLICITLY FOR THIS SINGLE-HIDDEN-LAYER MODEL. PROBS IN A SEPARATE SUBSECTION. NOT HARD TO DO.}
+
+In this form, we can see the connection to statistical field theories more explicitly. One can also calculate these PDFs layer by layer for deeper neural networks which we won't do in these notes but is covered in depth in the textbook ``The Principles of Deep Learning Theory'' by Sho Yaida, Dan Roberts, and Boris Hanin. 
+
+
+\subsubsection{Gaussian NNGP Kernel}
+
+Now, with this explicit PDF function, let's compute the NNGP kernel for an illustrative example, specifically for the following complex activation function:
+\begin{align}
+    \sigma(z) &= e^{iz}
+\end{align}
+where $z_i = W^{(1)}_{ij}x^j$.
+
+Let's assume that our input vectors $x^j$ are one-dimensional so $j=1$. Let's also focus on one generic neuron because that determines our NNGP. Thus, the $i$-th index $W_{ij}^{(1)}$ is irrelevant and we'll just denote it $W^{(1)}$. Thus, we get the following neuron and inner product:
+\begin{align}
+    \sigma_\alpha &= \exp[i\,W^{(1)} x_\alpha] \equiv \psi_\alpha\\
+     \braket{\sigma_\alpha}{\sigma_\beta} &= \exp[iW^{(1)}(x_\beta-x_\alpha)] \equiv \braket{\psi_\alpha}{\psi_\beta}
+\end{align}
+
+Let's now compute the NNGP kernel for this particular activation function where we'll temporarily drop the layer numbering on the weight i.e. $W\equiv W^{(1)}$. 
+
+\begin{align}
+    K(x_\alpha,x_\beta) &= \expval{\sigma_\alpha \sigma_\beta}\nonumber\\
+    &= \int_{-\infty}^\infty dW\, \frac{1}{\sqrt{2 \pi C_W}}\,\exp\left[-\frac{1}{2}\frac{ W^2}{C_W}\right] \exp\left[iW(x_\beta-x_\alpha)\right]\nonumber\\
+    \therefore K(x_\alpha,x_\beta) &= \exp\left[-\frac{1}{2}C_W^{(1)}(x_\beta-x_\alpha)^2\right] 
+\end{align}
+
+Notice that this is exactly a Gaussian kernel with distance scale $L \equiv (1/C_W)^{1/2}$. Thus, we can back out the representations necessary to generate a Gaussian kernel without much difficulty. Notice that we can also generalise this to arbitrary neurons and cases where our input are $n_0$-dimensional. Let's generalise this now. 
+\begin{align}
+    K(x_\alpha,x_\beta) &= \expval{\sigma_{i;\alpha} \sigma_{i;\beta}}\nonumber\\
+    &= \int_{-\infty}^\infty \mathcal{D}W_{ij}\, \frac{1}{{(2 \pi C_W)^{n_0/2}}}\,\exp\left[-\frac{1}{2}\frac{W_{ij}^2}{C_W}\right] \exp\left[iW_{ik}\frac{1}{\sqrt{n_0}}(x^k_\beta-x^k_\alpha)\right]\nonumber\\
+    &= \int \left(\Pi_{j=1}^{n_0} dW_{ij} \frac{1}{\sqrt{2\pi C_W}} \exp\left[-\frac{1}{2}\frac{W_{ij}^2}{C_W}\right]\right)\exp\left[iW_{ik}\frac{1}{\sqrt{n_0}}(x^k_\beta-x^k_\alpha)\right]\nonumber\\
+    &= \Pi_{j=1}^{n_0}\left(\int dW_{ij} \frac{1}{\sqrt{2\pi C_W}} \exp\left[-\frac{1}{2}\frac{W_{ij}^2}{C_W}\right]\exp\left[iW_{ij}\frac{1}{\sqrt{n_0}}(x_{j;\beta}-x_{j;\alpha})\right]\right)\nonumber\\
+    &= \Pi_{j=1}^{n_0} \exp[-\frac{1}{2}\frac{C_W}{n_0}(x_{j;\beta}-x_{j;\alpha})^2]\nonumber\\
+    \therefore K(x_\alpha,x_\beta) &= \exp[-\frac{1}{2}\frac{C_W^{(1)}}{n_0}(x_{j;\beta}-x_{j;\alpha})(x_{\beta}^j-x_{\alpha}^j)]
+\end{align}
+
+Thus, we get a similar but slightly generalised version of the previous Gaussian kernel function but where each component of the input vector $x_j$ is part of a Gaussian kernel with length scale $L=(n_0/C_W)^{1/2}$. Remember again that this is all in the limit of infinite width because it is only in this limit that the sum over randomised hidden layer neurons becomes an exact expectation value/mean. 
+
+
+
+\subsection{The Benefit of Over-Parametrisation}
+
+Now, given that we have specified NNGP kernel in the infinite width limit, one could ask what the benefit of such a limit is over a random feature network for a finite-width neural network (i.e. randomise the first layer weights so we have random features and then just train the second layer weights). 
+
+One benefit is that in this infinite width limit, training a neural network just amounts to solving kernel regression on a random feature matrix i.e. a random kernel matrix. Computationally, that's pretty easy. The only hard part is that at times, the calculation of the kernel function can be tricky but this can be done perturbatively with existing methods from physics.\footnote{Besides, one of the points of QFT class was to get good at these kinds of perturbative calculations.}
+
+Another benefit, although with a caveat that I'll discuss shortly, is that there is a clear advantage to being over-parametrised and having far more parameters than data samples. Specifically, when the number of parameters $N_\theta$ is much greater than the number of training data samples $N_\trainset$ (i.e. $N_\theta \gg N_\trainset$), then neural networks tend to do much better at generalising to unseen data. This is still an active area of research but there are several empirical phenomena related to this data regime. Double descent is the phenomena where as one increases the number of parameters in the model, $N_\theta$, the training loss goes to zero but while the test loss initially diminishes and then rises (because of training data-overfitting), the test loss diminishes again and continues to diminish with $N_\theta$. It's quite interesting and mysterious because it violates the classical principles of statistics we often learn in college (at least for me it was very surprising!). However, from what I've read, it seems like the worst regime where $N_\theta \approx N_\trainset$ because we don't sample well in any particular data-sample direction. However, when $N_\theta \gg N_\trainset$, we know exactly which directions in $\theta$-space are poorly sampled by data-samples. One has a lot more flexibility and one can see where in $\theta$-space to move to better cover the data-samples. Anyways, there are lots of different ideas for this so I won't go into detail except to say that it may be desirable to be in the over-parametrised regime which is intrinsically true for the infinite width limit. 
+
+However, there is a caveat to this argument above. Specifically, something special occurs in the infinite width limit in that our features are random and are not ``developed'' or ``evolved'' during training. We have a set of random features and then we just tune the weights using kernel regression algorithms or some algorithm akin to that. This, to me, does not seem ideal. The whole point of machine learning seems to be that interesting non-linear features are learned from the data and these allow us to generalise well in contexts where the true functions we want to approximate are extremely nonlinear. Being in this infinite width regime, while advantageous computationally and parametrically, seems limited for this reason. I think a better regime would be where we are overparametrised $N_\theta \gg N_\trainset$ but also not infinitely wide. This may allow us the benefit of flexibility while also allowing for non-trivial feature evolution during training. In any case, we will cover the evolution of the infinite-width regime in the next set of lecture notes. 
+
+
+
+
+
+\newpage
+\part{Average Gradient Outer Product (AGOP)}
+
+\section{RG Flow of the AGOP}
+Let's understand our AGOP at initialisation and how the AGOP varies at each layer.
+
+\subsection{AGOP Backward Equation}
+We'll begin by understanding how we expect each layer's AGOP to depend on the previous layer's AGOP. Recall our definition of the AGOP at layer $l$:
+\begin{align}
+\agop_{i j}^{(l)} &= \frac{1}{n_{\dataset}}\left[\pdv{z_{i_L;\beta}}{\sigma^{(l-1)}_{i}}\right]\left[\pdv{z_{i_L;\beta}}{\sigma^{(l-1)}_{j}}\right]
+\end{align}
+
+We can relate to the AGOP at other layers without too much difficulty. Note that we can rewrite the AGOP as follows:
+\begin{align}
+    \agop_{i j}^{(l)} &= \frac{1}{n_{\dataset}}\left[\pdv{z_{i_L;\beta}}{\sigma^{(l)}_{i'}}\,\pdv{\sigma_{i'}^{(l)}}{\sigma_{i}^{(l-1)}}\right]\left[\pdv{z_{i_L;\beta}}{\sigma^{(l)}_{j'}}\, \pdv{\sigma_{j'}^{(l)}}{\sigma_{j}^{(l-1)}}\right]\\
+    &= \agop^{(l+1)}_{i' j'}\, \pdv{\sigma_{i'}^{(l)}}{\sigma_{i}^{(l-1)}}\,\pdv{\sigma_{j'}^{(l)}}{\sigma_{j}^{(l-1)}}\\
+    \therefore \agop_{i j}^{(l)} &= \agop^{(l+1)}_{i' j'}\,\sigma^{'\,(l)}_{i'} W^{(l)}_{i'i}\,\sigma^{'\,(l)}_{j'} W^{(l)}_{j'j}
+\end{align}
+where we sum over the $i',j'$ indices and we're still summing over the datasample indices $\beta$ for everything. 
+
+What's interesting about this recursive relationship is that the AGOP at layer $l$ depends on the AGOP at layer $l+1$. That may seem quite un-intuitive given that most of our understanding of DFCNs and the statistics of their outputs can be computed recursively from early layers to later layers. 
+
+To understand this result intuitively, let's recall what the AGOP represents: The AGOP at layer $l$ tells us about the importance of learned features $\sigma^{(l-1)}_{i_{l-1}}$ in the weights of layer $l$. In other words, the AGOP is a bit like a kernel where we map vectors in the layer $l-1$'s feature space into the learned weight space of layer $l$ and compute distances. Thus, it makes intuitive sense that the AGOP at layer $l$ depends recursively on the AGOP at higher layers because those higher layers are learning more complex features and thus defining a different feature space in which to compute distances. 
+
+Another way to understand this is to think of why the current layer $l$'s AGOP doesn't depend on the AGOP of previous layers. The AGOP at layer $l$ represents a kernel in layer $l-1$'s feature space. We don't care about how those features are formed in layer $l-1$ and their dependence on layers $l' < l-1$, just how they are weighted in proceeding layers $l' > l-1$. The point is that some features have been learned and we want to understand how important their weights are when separating or clustering different inputs. 
+
+
+
+
+
+\newpage
+\part{Supplementary Material}
+\label{sec:appendices}
+\appendix
+\section{Some title}
+Please always give a title also for appendices.
+
+
+
+
+
+\acknowledgments
+
+This is the most common positions for acknowledgments. A macro is
+available to maintain the same layout and spelling of the heading.
+
+\paragraph{Note added.} This is also a good position for notes added
+after the paper has been written.
+
+
+
+
+
+% The bibliography will probably be heavily edited during typesetting.
+% We'll parse it and, using the arxiv number or the journal data, will
+% query inspire, trying to verify the data (this will probalby spot
+% eventual typos) and retrive the document DOI and eventual errata.
+% We however suggest to always provide author, title and journal data:
+% in short all the informations that clearly identify a document.
+
+\begin{thebibliography}{99}
+
+
+
+% Please avoid comments such as "For a review'', "For some examples",
+% "and references therein" or move them in the text. In general,
+% please leave only references in the bibliography and move all
+% accessory text in footnotes.
+
+% Also, please have only one work for each \bibitem.
+
+
+\end{thebibliography}
+\end{document}
